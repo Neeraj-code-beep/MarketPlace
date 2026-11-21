@@ -3,7 +3,7 @@ export default {
   testEnvironment: 'node',
 
   // Only discover test files inside the tests directory
-  testMatch: ['<rootDir>/tests/auth/register.test.js'],
+  testMatch: ['<rootDir>/tests/**/*.test.js'],
 
   // Run this setup file before executing test suites
   setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],

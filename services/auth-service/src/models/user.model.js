@@ -85,7 +85,7 @@ const userSchema = new mongoose.Schema(
     },
 
     // User's personal name
-    fullname: {
+    fullName: {
       firstName: {
         type: String,
         required: true,

@@ -1,11 +1,13 @@
 import 'dotenv/config';
 
+import mongoose from 'mongoose';
 import app from './src/app.js';
 import connectDB from './src/config/db.js';
 
 const PORT = process.env.PORT || 3000;
 
 let server;
+let isShuttingDown = false;
 
 // Start the application only after MongoDB connects successfully
 const startServer = async () => {
@@ -23,6 +25,10 @@ const startServer = async () => {
 
 // Gracefully shut down the application when a termination signal is received
 const gracefulShutdown = async (signal) => {
+  // Prevent multiple shutdown attempts
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
   console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
 
   try {
@@ -39,7 +45,7 @@ const gracefulShutdown = async (signal) => {
     }
 
     // Close the MongoDB connection after HTTP requests have finished
-    await connectDB.connection?.close?.();
+    await mongoose.connection.close();
 
     console.log('Application shut down successfully.');
     process.exit(0);
