@@ -82,4 +82,52 @@ const registerUserValidations = [
     .withMessage('Last name contains invalid characters'),
 ];
 
-export default registerUserValidations;
+// Validation rules for user login
+const loginUserValidations = [
+  // -------------------- IDENTIFIER VALIDATION --------------------
+
+  body('identifier')
+    .optional()
+    .isString()
+    .withMessage('Username or email must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('Username or email is required'),
+
+  // Support existing email-based requests
+  body('email')
+    .optional()
+    .isString()
+    .withMessage('Email must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('Email cannot be empty')
+    .bail()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .bail()
+    .normalizeEmail(),
+
+  // Support existing username-based requests
+  body('username')
+    .optional()
+    .isString()
+    .withMessage('Username must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('Username cannot be empty'),
+
+  // -------------------- PASSWORD VALIDATION --------------------
+
+  body('password')
+    .isString()
+    .withMessage('Password must be a string')
+    .bail()
+    .notEmpty()
+    .withMessage('Password is required'),
+];
+
+export default { registerUserValidations, loginUserValidations };
