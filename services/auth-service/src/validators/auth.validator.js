@@ -1,4 +1,5 @@
 import { body } from 'express-validator';
+import respondWithValidationErrors from '../middlewares/validate.middleware';
 
 // Validation rules for user registration
 const registerUserValidations = [
@@ -80,6 +81,12 @@ const registerUserValidations = [
     .bail()
     .matches(/^[a-zA-Z\s'-]+$/)
     .withMessage('Last name contains invalid characters'),
+
+  body('role')
+    .optional()
+    .isIn(['user', 'seller'])
+    .withMessage("Role must be either 'user' or 'seller' "),
+  respondWithValidationErrors,
 ];
 
 // Validation rules for user login
@@ -130,4 +137,85 @@ const loginUserValidations = [
     .withMessage('Password is required'),
 ];
 
-export default { registerUserValidations, loginUserValidations };
+const addUserAddressValidations = [
+  body('street')
+    .isString()
+    .withMessage('Street must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('Street is required')
+    .bail()
+    .isLength({ max: 150 })
+    .withMessage('Street cannot exceed 150 characters'),
+
+  body('city')
+    .isString()
+    .withMessage('City must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('City is required')
+    .bail()
+    .isLength({ max: 50 })
+    .withMessage('City cannot exceed 50 characters'),
+
+  body('state')
+    .isString()
+    .withMessage('State must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('State is required')
+    .bail()
+    .isLength({ max: 50 })
+    .withMessage('State cannot exceed 50 characters'),
+
+  body('pincode')
+    .isString()
+    .withMessage('Pincode must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('Pincode is required')
+    .bail()
+    .isLength({ min: 4, max: 10 })
+    .withMessage('Pincode must be between 4 and 10 characters')
+    .bail()
+    .matches(/^[a-zA-Z0-9 -]+$/)
+    .withMessage('Pincode contains invalid characters'),
+
+  body('country')
+    .isString()
+    .withMessage('Country must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('Country is required')
+    .bail()
+    .isLength({ max: 56 })
+    .withMessage('Country cannot exceed 56 characters'),
+
+  body('phone')
+    .isString()
+    .withMessage('Phone number must be a string')
+    .bail()
+    .trim()
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .bail()
+    .matches(/^\+?[0-9]{7,15}$/)
+    .withMessage('Please provide a valid phone number'),
+
+  body('isDefault')
+    .optional()
+    .isBoolean()
+    .withMessage('isDefault must be a boolean')
+    .toBoolean(),
+];
+
+export default {
+  registerUserValidations,
+  loginUserValidations,
+  addUserAddressValidations,
+};

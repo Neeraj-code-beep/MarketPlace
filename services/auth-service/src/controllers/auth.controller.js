@@ -18,6 +18,7 @@ const registerUser = async (req, res) => {
     email,
     password,
     fullName: { firstName, lastName },
+    role,
   } = req.body;
 
   const isUserAlreadyExists = await User.findOne({
@@ -37,6 +38,7 @@ const registerUser = async (req, res) => {
     email,
     password: hash,
     fullName: { firstName, lastName },
+    role: role || 'user',
   });
 
   // Check whether JWT_SECRET is available
@@ -206,9 +208,113 @@ const logoutUser = async (req, res) => {
   }
 };
 
+const getUserAddresses = async (req, res) => {
+  const id = req.user.id;
+
+  const user = await User.findById(id).select('addresses');
+
+  if (!user) {
+    return res.status(404).json({
+      message: 'User not found',
+    });
+  }
+
+  return res.status(200).json({
+    message: 'User addresses fetched successfully',
+    addresses: user.addresses,
+  });
+};
+
+const addUserAddresses = async (req, res) => {
+  const id = req.user.id;
+
+  const { street, city, state, pincode, country, phone, isDefault } = req.body;
+
+  const user = await User.findOneAndUpdate(
+    { _id: id },
+    {
+      $push: {
+        addresses: {
+          street,
+          city,
+          state,
+          pincode,
+          country,
+          phone,
+          isDefault,
+        },
+      },
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!user) {
+    return res.status(404).json({
+      message: 'User not found',
+    });
+  }
+
+  return res.status(201).json({
+    message: 'Address added successfully',
+    address: user.addresses[user.addresses.length - 1],
+  });
+};
+
+const deleteUserAdresses = async (req, res) => {
+  const id = req.user.id;
+
+  const { addressId } = req.params;
+
+  const isAddressExists = await User.findOne({
+    _id: id,
+    'addresses._id': addressId,
+  });
+
+  if (!isAddressExists) {
+    return res.status(404).json({
+      message: 'Address not found',
+    });
+  }
+
+  const user = await User.findOneAndUpdate(
+    { _id: id },
+    {
+      $pull: {
+        addresses: { _id: addressId },
+      },
+    },
+    { new: true },
+  );
+
+  if (!user) {
+    return res.status(404).json({
+      message: 'User not found',
+    });
+  }
+
+  const addressExists = user.addresses.some(
+    (addr) => addr._id.toString() === addressId,
+  );
+  if (addressExists) {
+    return res.status(500).json({
+      message: 'Failed to delete address',
+    });
+  }
+
+  return res.status(200).json({
+    message: 'Address deleted successfully',
+    addresses: user.addresses,
+  });
+};
+
 export default {
   registerUser,
   loginUser,
   getCurrentUser,
   logoutUser,
+  getUserAddresses,
+  addUserAddresses,
+  deleteUserAdresses,
 };

@@ -27,4 +27,24 @@ router.get('/me', authMiddleware, authController.getCurrentUser);
 
 router.post('/logout', authController.logoutUser);
 
+router.get(
+  '/users/me/addresses',
+  authMiddleware,
+  authController.getUserAddresses,
+);
+
+router.post(
+  '/users/me/addresses',
+  authValidator.addUserAddressValidations,
+  respondWithValidationErrors,
+  authMiddleware,
+  authController.addUserAddresses,
+);
+
+router.delete(
+  '/users/me/addresses/:addressId',
+  authMiddleware,
+  authController.deleteUserAdresses,
+);
+
 export default router;
