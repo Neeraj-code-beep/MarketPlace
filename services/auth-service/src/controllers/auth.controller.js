@@ -1,11 +1,15 @@
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
+import redis from '../config/redis.js';
 
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
-  maxAge: 24 * 60 * 60 * 1000, // 1 day
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  path: '/',
+  maxAge: 24 * 60 * 60 * 1000,
 };
 
 const registerUser = async (req, res) => {
@@ -157,8 +161,54 @@ const getCurrentUser = async (req, res) => {
   });
 };
 
+const logoutUser = async (req, res) => {
+  const token = req.cookies?.token;
+
+  try {
+    // Handle requests where the user is already logged out.
+    if (!token) {
+      const { maxAge, ...clearOptions } = cookieOptions;
+      res.clearCookie('token', clearOptions);
+
+      return res.status(200).json({
+        message: 'Logged out successfully',
+      });
+    }
+
+    // Decode the token to determine its remaining lifetime.
+    const decoded = jwt.decode(token);
+
+    const now = Math.floor(Date.now() / 1000);
+    const maxTokenLifetime = 24 * 60 * 60;
+
+    const remainingLifetime =
+      typeof decoded?.exp === 'number' ? decoded.exp - now : maxTokenLifetime;
+
+    // Blacklist the token while it is still valid.
+    if (remainingLifetime > 0) {
+      const ttl = Math.min(remainingLifetime, maxTokenLifetime);
+
+      // Store a SHA-256 hash instead of the original JWT.
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+      await redis.set(`blacklist:${tokenHash}`, '1', 'EX', ttl);
+    }
+
+    // Clear the authentication cookie.
+    const { maxAge, ...clearOptions } = cookieOptions;
+    res.clearCookie('token', clearOptions);
+
+    return res.status(200).json({
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default {
   registerUser,
   loginUser,
   getCurrentUser,
+  logoutUser,
 };
